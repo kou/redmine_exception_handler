@@ -18,7 +18,9 @@ end
 
 require_dependency 'exception_notification'
 require_dependency 'exception_notifier'
-ExceptionNotifier.send(:include, ExceptionHandler::RedmineNotifierPatch)
+class << ExceptionNotifier
+  prepend ExceptionHandler::RedmineNotifierPatch
+end
 
 RedmineApp::Application.config.middleware.use ExceptionNotification::Rack,
   :email => {

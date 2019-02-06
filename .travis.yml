@@ -17,6 +17,17 @@ matrix:
         - bin/rake redmine:plugins:migrate
       script:
         - RAILS_ENV=test bin/rake redmine:plugins:test:integration
+    - name: "Redmine 4.0"
+      env:
+        - REDMINE_VERSION=4.0-stable
+      install:
+        - bundle install
+        - bin/rails db:create
+        - bin/rails generate_secret_token
+        - bin/rails db:migrate
+        - bin/rails redmine:plugins:migrate
+      script:
+        - RAILS_ENV=test bin/rails redmine:plugins:test:integration
 
 before_install:
   - cd ..

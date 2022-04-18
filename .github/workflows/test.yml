@@ -1,0 +1,73 @@
+name: Test
+on:
+  - push
+  - pull_request
+jobs:
+  test:
+    name: Redmine ${{ matrix.redmine-version }} & Ruby ${{ matrix.ruby-version }}
+    runs-on: ubuntu-20.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - redmine-version: "4.1"
+            ruby-version: "2.6"
+          - redmine-version: "4.2"
+            ruby-version: "2.6"
+          - redmine-version: "5.0"
+            ruby-version: "2.7"
+          - redmine-version: "5.0"
+            ruby-version: "3.0"
+          - redmine-version: "master"
+            ruby-version: "3.0"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup environment variables
+        run: |
+          case "${{ matrix.redmine-version }}" in
+            master)
+              echo "REDMINE_BRANCH=master" >> ${GITHUB_ENV}
+              ;;
+            *)
+              echo "REDMINE_BRANCH=${{ matrix.redmine-version }}-stable" >> \
+                ${GITHUB_ENV}
+              ;;
+          esac
+      - name: Run MySQL
+        run: |
+          sudo systemctl start mysql
+      - name: Reset MySQL's root password
+        run: |
+          sudo mysql \
+            --defaults-file=/etc/mysql/debian.cnf \
+            -e "ALTER USER 'root'@'localhost' \
+                IDENTIFIED WITH caching_sha2_password BY ''"
+      - name: Prepare Redmine
+        run: |
+          cd ..
+          git clone \
+            --depth 1 \
+            --branch ${REDMINE_BRANCH} \
+            https://github.com/redmine/redmine.git
+          cd redmine
+          cd plugins
+          ln -s ../../redmine_exception_handlers ./
+          cd ../
+          cp config/database.yml{.example,}
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+          bundler-cache: true
+        env:
+          BUNDLE_GEMFILE: ${{ github.workspace }}/../redmine/Gemfile
+      - name: Install
+        run: |
+          cd ../redmine
+          bin/rails db:create
+          bin/rails generate_secret_token
+          bin/rails db:migrate
+      - name: Test
+        run: |
+          cd ../redmine
+          RAILS_ENV=test bin/rails redmine:plugins:test

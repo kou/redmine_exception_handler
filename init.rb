@@ -1,5 +1,3 @@
-require 'redmine'
-
 Redmine::Plugin.register :redmine_exception_handler do
   name 'Redmine Exception Handler plugin'
   author 'Eric Davis'
@@ -16,8 +14,6 @@ Redmine::Plugin.register :redmine_exception_handler do
 
 end
 
-require_dependency 'exception_notification'
-require_dependency 'exception_notifier'
 class << ExceptionNotifier
   prepend ExceptionHandler::RedmineNotifierPatch
 end

@@ -1,5 +1,5 @@
 module ExceptionHandler
-  module VERSION #:nodoc:
+  module Version #:nodoc:
     MAJOR = 2
     MINOR = 0
     TINY  = 0

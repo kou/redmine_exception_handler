@@ -14,11 +14,7 @@ Redmine::Plugin.register :redmine_exception_handler do
 
 end
 
-class << ExceptionNotifier
-  prepend ExceptionHandler::RedmineNotifierPatch
-end
-
-RedmineApp::Application.config.middleware.use ExceptionNotification::Rack,
-  :email => {
-    :sections => %w(request session environment backtrace)
-  }
+options = {
+  sections: %w(request session environment backtrace),
+}
+ExceptionNotifier.register_exception_notifier(:email, options)
